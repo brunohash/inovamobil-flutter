@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'pages/homepage.dart';
 
 void main() {
@@ -63,9 +65,8 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Imagem de fundo
           Image.asset(
-            'assets/images/city.jpeg', // Coloque o caminho para a sua imagem aqui
+            'assets/images/city.jpeg',
             fit: BoxFit.cover,
           ),
           Center(
@@ -114,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 20),
                           Text(
                             _errorMessage,
-                            style: TextStyle(color: Colors.red),
+                            style: const TextStyle(color: Colors.red),
                           ),
                         ],
                       ],
@@ -139,22 +140,58 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _documentTypeController = TextEditingController();
   final _documentController = TextEditingController();
-  final _dobController = TextEditingController();
-  final _cepController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _mobileController = TextEditingController();
+  final _areaCodeController = TextEditingController();
+  final _numberController = TextEditingController();
 
-  void _register() {
+  void _register() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Process registration
-      Navigator.of(context).pop();
+      final name = _nameController.text;
+      final email = _emailController.text;
+      final documentType = _documentTypeController.text;
+      final document = _documentController.text;
+      final areaCode = int.tryParse(_areaCodeController.text) ?? 0;
+      final number = int.tryParse(_numberController.text) ?? 0;
+
+      final response = await http.post(
+        Uri.parse('https://localhost:7050/client'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'documentType': documentType,
+          'document': document,
+          'areaCode': areaCode,
+          'number': number,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Sucesso, navega para a próxima tela
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        // Erro, mostra um alert
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Erro'),
+            content: const Text('Erro ao cadastrar usuário.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -199,6 +236,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                   TextFormField(
+                    controller: _documentTypeController,
+                    decoration: const InputDecoration(labelText: 'Tipo de Documento'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira o tipo do documento.';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
                     controller: _documentController,
                     decoration: const InputDecoration(labelText: 'Documento'),
                     validator: (value) {
@@ -209,75 +256,23 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                   TextFormField(
-                    controller: _dobController,
-                    decoration: const InputDecoration(labelText: 'Data de nascimento'),
-                    keyboardType: TextInputType.datetime,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira a data de nascimento.';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _cepController,
-                    decoration: const InputDecoration(labelText: 'CEP'),
+                    controller: _areaCodeController,
+                    decoration: const InputDecoration(labelText: 'Código de Área'),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Por favor, insira o CEP.';
+                        return 'Por favor, insira o código de área.';
                       }
                       return null;
                     },
                   ),
                   TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(labelText: 'Endereço'),
+                    controller: _numberController,
+                    decoration: const InputDecoration(labelText: 'Número'),
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Por favor, insira o endereço.';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _cityController,
-                    decoration: const InputDecoration(labelText: 'Cidade'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira a cidade.';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _stateController,
-                    decoration: const InputDecoration(labelText: 'Estado'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira o estado.';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Telefone'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira o telefone.';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _mobileController,
-                    decoration: const InputDecoration(labelText: 'Celular'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira o celular.';
+                        return 'Por favor, insira o número.';
                       }
                       return null;
                     },
@@ -296,4 +291,3 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
-
